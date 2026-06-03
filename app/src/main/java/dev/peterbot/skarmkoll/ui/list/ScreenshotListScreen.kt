@@ -50,8 +50,26 @@ fun ScreenshotListScreen(
 
     LaunchedEffect(access) { viewModel.sync() }
 
+    val processed = state.screenshots.count { it.processed }
+    val total = state.screenshots.size
+
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.list_title)) }) }
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(stringResource(R.string.list_title))
+                        // Visa OCR-framsteg bara medan något återstår — försvinner när allt är klart.
+                        if (total > 0 && processed < total) {
+                            Text(
+                                text = stringResource(R.string.list_ocr_progress, processed, total),
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+                }
+            )
+        }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
             if (access == MediaAccess.PARTIAL) {
@@ -76,11 +94,30 @@ private fun ScreenshotGrid(items: List<Screenshot>) {
         modifier = Modifier.fillMaxSize()
     ) {
         items(items, key = { it.id }) { screenshot ->
-            AsyncImage(
-                model = screenshot.uri,
-                contentDescription = stringResource(R.string.cd_thumbnail),
-                modifier = Modifier.aspectRatio(0.6f)
-            )
+            Box {
+                AsyncImage(
+                    model = screenshot.uri,
+                    contentDescription = stringResource(R.string.cd_thumbnail),
+                    modifier = Modifier.aspectRatio(0.6f)
+                )
+                // Badge medan bilden väntar på OCR. När workern skrivit ocrText
+                // emitterar Room-strömmen om och badgen försvinner live.
+                if (!screenshot.processed) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.tertiaryContainer,
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(6.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.badge_unprocessed),
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
         }
     }
 }

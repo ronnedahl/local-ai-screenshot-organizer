@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.peterbot.skarmkoll.data.ScreenshotRepository
 import dev.peterbot.skarmkoll.domain.Screenshot
+import dev.peterbot.skarmkoll.work.OcrScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -27,7 +28,8 @@ data class ListUiState(
  */
 @HiltViewModel
 class ScreenshotListViewModel @Inject constructor(
-    private val repository: ScreenshotRepository
+    private val repository: ScreenshotRepository,
+    private val ocrScheduler: OcrScheduler
 ) : ViewModel() {
 
     private val isSyncing = MutableStateFlow(false)
@@ -47,8 +49,9 @@ class ScreenshotListViewModel @Inject constructor(
         )
 
     /**
-     * Synkar nya skärmdumpar från MediaStore till Room. Anropas när behörighet finns.
-     * OCR triggas inte här ännu — det kommer i 1.3 (WorkManager-batch).
+     * Synkar nya skärmdumpar från MediaStore till Room och köar därefter OCR-batchen.
+     * Vi schemalägger alltid OCR efter synk: även om inget nytt tillkom kan det finnas
+     * rader som blev kvar obearbetade från en tidigare avbruten körning.
      */
     fun sync() {
         viewModelScope.launch {
@@ -56,6 +59,7 @@ class ScreenshotListViewModel @Inject constructor(
             try {
                 val result = repository.sync()
                 newlyAdded.value = result.added
+                ocrScheduler.schedule()
             } finally {
                 isSyncing.value = false
             }
