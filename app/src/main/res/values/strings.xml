@@ -17,6 +17,7 @@
     <string name="list_empty_title">Inga skärmdumpar hittades</string>
     <string name="list_empty_body">Ta en skärmdump så dyker den upp här.</string>
     <string name="list_loading">Söker efter skärmdumpar…</string>
+    <string name="list_ocr_progress">%1$d av %2$d bearbetade</string>
     <string name="cd_thumbnail">Miniatyr av skärmdump</string>
     <string name="badge_unprocessed">Ej bearbetad</string>
 

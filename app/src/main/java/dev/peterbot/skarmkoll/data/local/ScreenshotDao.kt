@@ -50,8 +50,12 @@ interface ScreenshotDao {
     @Query("UPDATE screenshots SET status = :status WHERE mediaStoreId = :id")
     suspend fun updateStatus(id: Long, status: String)
 
-    @Query("UPDATE screenshots SET ocrText = :ocrText, category = :category, processedAt = :processedAt WHERE mediaStoreId = :id")
-    suspend fun updateOcrResult(id: Long, ocrText: String?, category: String, processedAt: Long)
+    /**
+     * Skriver OCR-resultatet för en bild. Rör inte category — den regelbaserade
+     * kategoriseringen kommer i fas 1.4 och får sin egen uppdatering då.
+     */
+    @Query("UPDATE screenshots SET ocrText = :ocrText, processedAt = :processedAt WHERE mediaStoreId = :id")
+    suspend fun markOcrProcessed(id: Long, ocrText: String?, processedAt: Long)
 
     @Query("DELETE FROM screenshots WHERE mediaStoreId = :id")
     suspend fun deleteById(id: Long)
